@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  auth-service:
+    build:
+      context: ./auth-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./auth-service:/app
+    restart: always
+
+  job-service:
+    build:
+      context: ./job-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./job-service:/app
+    depends_on:
+      - auth-service
+    restart: always
+
+  notification-service:
+    build:
+      context: ./notification-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./notification-service:/app
+    depends_on:
+      - redis
+    restart: always
+
+  notification-worker:
+    build:
+      context: ./notification-service
+    command: celery -A app.tasks worker --loglevel=info
+    volumes:
+      - ./notification-service:/app
+    depends_on:
+      - redis
+    restart: always
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - job-service
+      - notification-service
+    restart: always

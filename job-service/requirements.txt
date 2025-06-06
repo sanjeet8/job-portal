@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+httpx  # For calling auth-service to validate tokens
