@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_PREFIX: yourdockerhubusername  # replace this
+      IMAGE_PREFIX: sanjeet8  # replace this
 
     steps:
       - name: Checkout Code

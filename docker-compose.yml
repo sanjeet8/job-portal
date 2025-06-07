@@ -9,6 +9,16 @@ services:
     volumes:
       - ./auth-service:/app
     restart: always
+    depends_on:
+      - postgres
+    networks:
+      - backend
+    environment:   # ✅ Add database env vars for auth-service
+      POSTGRES_USER: sanjeet
+      POSTGRES_PASSWORD: sanjeet123
+      POSTGRES_DB: auth_db
+      POSTGRES_HOST: postgres   # 🔥 This must match the service name
+      POSTGRES_PORT: 5432
 
   job-service:
     build:
@@ -20,6 +30,8 @@ services:
     depends_on:
       - auth-service
     restart: always
+    networks:
+      - backend
 
   notification-service:
     build:
@@ -31,6 +43,8 @@ services:
     depends_on:
       - redis
     restart: always
+    networks:
+      - backend
 
   notification-worker:
     build:
@@ -41,12 +55,16 @@ services:
     depends_on:
       - redis
     restart: always
+    networks:
+      - backend
 
   redis:
     image: redis:7
     ports:
       - "6379:6379"
     restart: always
+    networks:
+      - backend
 
   nginx:
     image: nginx:alpine
@@ -59,3 +77,25 @@ services:
       - job-service
       - notification-service
     restart: always
+    networks:
+      - backend
+
+  postgres:
+    image: postgres:14
+    # ✅ DO NOT set container_name here unless necessary; keep default
+    environment:
+      POSTGRES_USER: sanjeet
+      POSTGRES_PASSWORD: sanjeet123
+      POSTGRES_DB: auth_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
