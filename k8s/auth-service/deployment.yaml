@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-service
+  namespace: auth
   labels:
     app: auth-service
 spec:
@@ -17,9 +18,43 @@ spec:
       containers:
         - name: auth-service
           image: sanjeet8/auth-service:latest
-          #command: ["/bin/sh", "-c", "env; sleep 3600"]
+          # command: ["/bin/sh", "-c", "echo $DATABASE_URL; sleep 3600"]
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8001
+              name: http
           env:
+            # Use a secret for password and JWT (see secret.yaml below)
             - name: DATABASE_URL
-              value: "postgresql://sanjeet:sanjeet123@postgres:5432/auth_db"
+              # value: "postgresql://sanjeet:{{DB_PASSWORD_PLACEHOLDER}}@postgres:5432/auth_db"
+              valueFrom:
+                secretKeyRef:
+                  name: auth-db-url
+                  key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: jwt-secret
+          # Readiness/Liveness: use tcp check on port 8001 (generic) — replace with HTTP path if your app exposes /health.
+          readinessProbe:
+            tcpSocket:
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

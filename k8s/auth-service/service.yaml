@@ -2,11 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: auth-service
+  namespace: auth
+  labels:
+    app: auth-service
 spec:
   selector:
     app: auth-service
   ports:
-    - protocol: TCP
-      port: 8001         # <- external port (accessible within cluster)
-      targetPort: 8001   # <- port exposed by container
+    - name: http
+      protocol: TCP
+      port: 8001         # cluster-visible port
+      targetPort: 8001   # container port
   type: ClusterIP
